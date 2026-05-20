@@ -1,7 +1,8 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from tokenizer import ChineseTokenizer,EnglishTokenizer
+
 import config
+from tokenizer import ChineseTokenizer, EnglishTokenizer
 
 
 def process():
@@ -22,8 +23,8 @@ def process():
     # 划分数据集
     train_df, test_df = train_test_split(df, test_size=0.2)
     # 构建中英文 两个词表 (基于训练集）
-    ChineseTokenizer.build_vocab(train_df["cn"], config.PROCESSED_DATA_DIR / "cn_vocab.txt")
-    EnglishTokenizer.build_vocab(train_df["en"],config.PROCESSED_DATA_DIR / "en_vocab.txt")
+    ChineseTokenizer.build_vocab(train_df["cn"].to_list(), config.PROCESSED_DATA_DIR / "cn_vocab.txt")
+    EnglishTokenizer.build_vocab(train_df["en"].to_list(), config.PROCESSED_DATA_DIR / "en_vocab.txt")
     # 从已保存的文件中构建Tokenizer 对象 用来处理训练集与数据集
     chinese_tokenizer = ChineseTokenizer.from_vocab(config.PROCESSED_DATA_DIR / "cn_vocab.txt")
     english_tokenizer = EnglishTokenizer.from_vocab(config.PROCESSED_DATA_DIR / "en_vocab.txt")
@@ -33,13 +34,13 @@ def process():
     # print("cn_len:", cn_len)
     # print("en_len:", en_len)
     # 构建训练集并保存
-    train_df['cn']=train_df['cn'].apply(lambda x: chinese_tokenizer.encode(x, seq_len=config.SEQ_LEN, add_sos_eos=True))
+    train_df['cn']=train_df['cn'].apply(lambda x: chinese_tokenizer.encode(x, seq_len=config.SEQ_LEN, add_sos_eos=False))
     train_df['en']=train_df['en'].apply(lambda x: english_tokenizer.encode(x, seq_len=config.SEQ_LEN, add_sos_eos=True))
-    train_df.to_json(config.PROCESSED_DATA_DIR / "index_train.jsonl")
+    train_df.to_json(config.PROCESSED_DATA_DIR / "indexed_train.jsonl", orient='records', lines=True)
     # 构建训练集并保存
-    test_df['cn']=test_df['cn'].apply(lambda x: chinese_tokenizer.encode(x, seq_len=config.SEQ_LEN, add_sos_eos=True))
+    test_df['cn']=test_df['cn'].apply(lambda x: chinese_tokenizer.encode(x, seq_len=config.SEQ_LEN, add_sos_eos=False))
     test_df['en']=test_df['en'].apply(lambda x: english_tokenizer.encode(x, seq_len=config.SEQ_LEN, add_sos_eos=True))
-    test_df.to_json(config.PROCESSED_DATA_DIR / "index_test.jsonl")
+    test_df.to_json(config.PROCESSED_DATA_DIR / "indexed_test.jsonl", orient='records', lines=True)
     print("数据预处理结束")
 if __name__ == '__main__':
     process()

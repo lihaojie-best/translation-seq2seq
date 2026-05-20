@@ -27,13 +27,22 @@ class BaseTokenizer:
     def tokenize(text):
         pass
 
-    def encode(self, text, seq_len, add_sos_eos):
-        word_list = self.tokenize(text)
-        if len(word_list) <= seq_len - 2:
-            word_list = [self.sos_token] + word_list + [self.eos_token] + [self.pad_token] * (
-                    seq_len - len(word_list) - 2)
+    def encode(self, word_list, seq_len, add_sos_eos=False):
+        if add_sos_eos:
+            if len(word_list) == seq_len - 2:
+                word_list = [self.sos_token] + word_list + [self.eos_token]
+            elif len(word_list) < seq_len - 2:
+                word_list = [self.sos_token] + word_list + [self.eos_token] + [self.pad_token] * (
+                        seq_len - len(word_list) - 2)
+            else:
+                word_list = [self.sos_token] + word_list[:seq_len - 2] + [self.eos_token]
         else:
-            word_list = [self.sos_token] + word_list[0:seq_len - 2] + [self.eos_token]
+            # 补齐或截断到指定的seq_len
+            if len(word_list) > seq_len:
+                word_list = word_list[0:seq_len]
+            elif len(word_list) < seq_len:
+                word_list = word_list + [self.pad_token] * (seq_len - len(word_list))
+
         return [self.word2index.get(word, self.unk_token_id) for word in word_list]
 
     @classmethod
